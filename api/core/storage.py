@@ -15,6 +15,11 @@ def get_connection() -> sqlite3.Connection:
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path, timeout=5)
     conn.execute("PRAGMA journal_mode=WAL")
+    return conn
+
+
+def init_db() -> None:
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS baselines (
             user_id TEXT PRIMARY KEY,
@@ -25,17 +30,16 @@ def get_connection() -> sqlite3.Connection:
         )
     """)
     conn.commit()
-    return conn
+    conn.close()
 
 
 def save_baseline(user_id: str, mean: float, std: float, samples_count: int) -> None:
-    conn = get_connection()
-    conn.execute("""
-        INSERT OR REPLACE INTO baselines (user_id, mean, std, samples_count)
-        VALUES (?, ?, ?, ?)
-    """, (user_id, mean, std, samples_count))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO baselines (user_id, mean, std, samples_count)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, mean, std, samples_count))
+        conn.commit()
 
 
 def load_baseline(user_id: str) -> Optional[Tuple[float, float, int]]:
@@ -48,3 +52,12 @@ def load_baseline(user_id: str) -> Optional[Tuple[float, float, int]]:
     if row is None:
         return None
     return row[0], row[1], row[2]
+
+
+def delete_baseline(user_id: str) -> bool:
+    conn = get_connection()
+    cursor = conn.execute("DELETE FROM baselines WHERE user_id = ?", (user_id,))
+    conn.commit()
+    deleted = cursor.rowcount > 0
+    conn.close()
+    return deleted

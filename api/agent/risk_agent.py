@@ -37,7 +37,8 @@ def get_gemini_decision(confidence: float, z_scores: list) -> Tuple[str, str]:
 
     try:
         resp = httpx.post(
-            f"{GEMINI_URL}?key={api_key}",
+            GEMINI_URL,
+            headers={"x-goog-api-key": api_key},
             json={"contents": [{"parts": [{"text": prompt}]}]},
             timeout=10,
         )

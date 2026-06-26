@@ -73,6 +73,7 @@ data/
 
 # Simple readme (internal bible, not for GitHub)
 README_simple.md
+FLOW.md
 
 # Docker
 *.dockerignore
