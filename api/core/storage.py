@@ -6,9 +6,15 @@ from typing import Optional, Tuple
 DB_PATH = os.getenv("STORAGE_PATH", "data/keycadence.db")
 
 
+def get_db_path() -> str:
+    return os.getenv("STORAGE_PATH", DB_PATH)
+
+
 def get_connection() -> sqlite3.Connection:
-    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    db_path = get_db_path()
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path, timeout=5)
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS baselines (
             user_id TEXT PRIMARY KEY,
