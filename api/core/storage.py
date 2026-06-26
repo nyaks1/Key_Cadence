@@ -33,18 +33,17 @@ def init_db() -> None:
     Called once at application startup via the lifespan handler.
     The table stores per-user keystroke baselines (mean, std, sample count).
     """
-    conn = get_connection()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS baselines (
-            user_id TEXT PRIMARY KEY,
-            mean REAL NOT NULL,
-            std REAL NOT NULL,
-            samples_count INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS baselines (
+                user_id TEXT PRIMARY KEY,
+                mean REAL NOT NULL,
+                std REAL NOT NULL,
+                samples_count INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
 
 
 def save_baseline(user_id: str, mean: float, std: float, samples_count: int) -> None:
@@ -77,15 +76,12 @@ def load_baseline(user_id: str) -> Optional[Tuple[float, float, int]]:
     Returns:
         Tuple of (mean, std, samples_count) if found, None otherwise.
     """
-    conn = get_connection()
-    row = conn.execute(
-        "SELECT mean, std, samples_count FROM baselines WHERE user_id = ?",
-        (user_id,)
-    ).fetchone()
-    conn.close()
-    if row is None:
-        return None
-    return row[0], row[1], row[2]
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT mean, std, samples_count FROM baselines WHERE user_id = ?",
+            (user_id,)
+        ).fetchone()
+    return (row[0], row[1], row[2]) if row else None
 
 
 def delete_baseline(user_id: str) -> bool:
@@ -99,9 +95,7 @@ def delete_baseline(user_id: str) -> bool:
     Returns:
         True if a row was deleted, False if the user did not exist.
     """
-    conn = get_connection()
-    cursor = conn.execute("DELETE FROM baselines WHERE user_id = ?", (user_id,))
-    conn.commit()
-    deleted = cursor.rowcount > 0
-    conn.close()
-    return deleted
+    with get_connection() as conn:
+        cursor = conn.execute("DELETE FROM baselines WHERE user_id = ?", (user_id,))
+        conn.commit()
+        return cursor.rowcount > 0
