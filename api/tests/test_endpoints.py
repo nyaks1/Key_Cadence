@@ -573,11 +573,11 @@ class TestCrossEndpoint:
         }, headers=HEADERS)
         assert r4.status_code == 404
 
-    def test_health不受auth影响(self, client):
+    def test_health_endpoint_requires_no_auth(self, client):
         r = client.get("/health")
         assert r.status_code == 200
 
-    def test_root不受auth影响(self, client):
+    def test_root_endpoint_requires_no_auth(self, client):
         r = client.get("/")
         assert r.status_code == 200
 
