@@ -71,5 +71,8 @@ flutter/pubspec.lock
 *.sqlite3
 data/
 
+# Simple readme (internal bible, not for GitHub)
+README_simple.md
+
 # Docker
 *.dockerignore
