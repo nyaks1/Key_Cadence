@@ -69,6 +69,7 @@ flutter/pubspec.lock
 # Database (local dev only)
 *.db
 *.sqlite3
+data/
 
 # Docker
 *.dockerignore
