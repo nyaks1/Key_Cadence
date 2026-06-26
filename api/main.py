@@ -8,6 +8,12 @@ from api.core.storage import init_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Application lifespan handler.
+
+    Runs once at startup to initialize the database schema (creates the
+    baselines table if it does not exist). The yield point is where the
+    application is live and serving requests.
+    """
     init_db()
     yield
 
@@ -25,9 +31,11 @@ app.include_router(verify.router)
 
 @app.get("/")
 async def root():
+    """Root endpoint. Returns API name and a link to the docs."""
     return {"message": "KeyCadence API", "docs": "/docs"}
 
 
 @app.get("/health")
 async def health():
+    """Health check endpoint for uptime monitoring and load balancers."""
     return {"status": "healthy"}

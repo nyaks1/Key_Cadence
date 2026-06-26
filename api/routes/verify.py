@@ -11,6 +11,22 @@ router = APIRouter()
 
 @router.post("/verify", response_model=VerifyResponse)
 async def verify_user(request: VerifyRequest, key=Depends(verify_api_key)):
+    """Verify a user's identity by comparing keystroke timings to their baseline.
+
+    Loads the stored baseline, computes z-scores for the new sample, derives
+    a confidence score, and passes both to the Gemini risk agent for a final
+    access decision.
+
+    Args:
+        request: VerifyRequest with user_id and keystroke_timings (min 5).
+        key: Validated API key (injected by dependency).
+
+    Returns:
+        VerifyResponse with match_confidence, decision, reason, and flagged.
+
+    Raises:
+        HTTPException: 404 if the user has not been enrolled.
+    """
     baseline = load_baseline(request.user_id)
     if baseline is None:
         raise HTTPException(status_code=404, detail="User not enrolled")

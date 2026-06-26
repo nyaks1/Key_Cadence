@@ -8,6 +8,18 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0
 
 
 def get_risk_decision(confidence: float) -> Tuple[str, str]:
+    """Pure threshold-based risk decision with no external dependencies.
+
+    Maps a confidence score to an access decision using fixed thresholds.
+    Used as the fallback when Gemini is unavailable or returns an invalid
+    response.
+
+    Args:
+        confidence: Match confidence score between 0.0 and 1.0.
+
+    Returns:
+        Tuple of (decision, reason) where decision is ALLOW, STEP_UP, or BLOCK.
+    """
     if confidence >= 0.7:
         return "ALLOW", "High confidence match. User typing pattern is consistent with baseline."
     elif confidence >= 0.4:
@@ -17,6 +29,19 @@ def get_risk_decision(confidence: float) -> Tuple[str, str]:
 
 
 def get_gemini_decision(confidence: float, z_scores: list) -> Tuple[str, str]:
+    """Get an access decision from Gemini, falling back to threshold rules.
+
+    Sends the confidence score and per-keystroke z-scores to Gemini 2.0 Flash
+    for analysis. If the API key is missing, the request fails, or the response
+    is invalid, falls back to get_risk_decision().
+
+    Args:
+        confidence: Match confidence score between 0.0 and 1.0.
+        z_scores: List of z-scores per keystroke interval.
+
+    Returns:
+        Tuple of (decision, reason) where decision is ALLOW, STEP_UP, or BLOCK.
+    """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         return get_risk_decision(confidence)
