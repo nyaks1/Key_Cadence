@@ -1,3 +1,6 @@
+import logging
+import re
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.auth import verify_api_key
@@ -5,7 +8,10 @@ from api.models.schemas import EnrollRequest, EnrollResponse
 from api.core.scoring import analyze_keystroke_sample
 from api.core.storage import delete_baseline, save_baseline
 
+logger = logging.getLogger("keycadence.enroll")
 router = APIRouter()
+
+USER_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{3,64}$")
 
 
 @router.post("/enroll", response_model=EnrollResponse)
@@ -25,6 +31,7 @@ async def enroll_user(request: EnrollRequest, key=Depends(verify_api_key)):
     """
     mean, std = analyze_keystroke_sample(request.keystroke_timings)
     save_baseline(request.user_id, mean, std, len(request.keystroke_timings))
+    logger.info("Enrolled user %s with %d samples", request.user_id, len(request.keystroke_timings))
     return EnrollResponse(
         user_id=request.user_id,
         status="enrolled",
@@ -45,8 +52,12 @@ async def delete_user(user_id: str, key=Depends(verify_api_key)):
 
     Raises:
         HTTPException: 404 if the user does not exist.
+        HTTPException: 422 if user_id format is invalid.
     """
+    if not USER_ID_RE.match(user_id):
+        raise HTTPException(status_code=422, detail="Invalid user_id format")
     deleted = delete_baseline(user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
+    logger.info("Deleted user %s", user_id)
     return {"status": "deleted", "user_id": user_id}

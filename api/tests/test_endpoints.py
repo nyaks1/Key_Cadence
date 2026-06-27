@@ -7,9 +7,11 @@ from fastapi.testclient import TestClient
 def tmp_db(tmp_path):
     os.environ["STORAGE_PATH"] = str(tmp_path / "test.db")
     os.environ["VALID_API_KEYS"] = "test-key-1,test-key-2"
+    os.environ["DISABLE_RATE_LIMIT"] = "1"
     yield
     os.environ.pop("STORAGE_PATH", None)
     os.environ.pop("VALID_API_KEYS", None)
+    os.environ.pop("DISABLE_RATE_LIMIT", None)
 
 
 @pytest.fixture

@@ -12,8 +12,17 @@ COPY api/requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Create non-root user
+RUN adduser --disabled-password --gecos "" appuser
+
 # Now copy the rest of your code
 COPY api/ ./api/
+
+# Set ownership
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 # Cloud Run sets PORT automatically — your app must listen on it
 ENV PORT=8080

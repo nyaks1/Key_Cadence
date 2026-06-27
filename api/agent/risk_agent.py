@@ -1,8 +1,11 @@
-import os
 import json
-import httpx
+import logging
+import os
 from typing import Tuple
 
+import httpx
+
+logger = logging.getLogger("keycadence.risk_agent")
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
@@ -77,7 +80,9 @@ def get_gemini_decision(confidence: float, z_scores: list) -> Tuple[str, str]:
         decision = result.get("decision", "STEP_UP")
         reason = result.get("reason", "Gemini analysis.")
         if decision not in ("ALLOW", "STEP_UP", "BLOCK"):
+            logger.warning("Gemini returned invalid decision '%s', falling back to rules", decision)
             return get_risk_decision(confidence)
         return decision, reason
-    except Exception:
+    except (httpx.HTTPError, json.JSONDecodeError, KeyError, IndexError) as exc:
+        logger.warning("Gemini request failed (%s), falling back to rules", exc)
         return get_risk_decision(confidence)

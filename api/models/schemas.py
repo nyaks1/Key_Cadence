@@ -2,6 +2,8 @@ import re
 from pydantic import BaseModel, field_validator
 from typing import List
 
+MAX_TIMINGS = 10_000
+
 
 class EnrollRequest(BaseModel):
     """Request body for the /enroll endpoint."""
@@ -23,6 +25,8 @@ class EnrollRequest(BaseModel):
         """Require at least 5 keystroke samples for a meaningful baseline."""
         if len(v) < 5:
             raise ValueError("Minimum 5 keystroke samples required")
+        if len(v) > MAX_TIMINGS:
+            raise ValueError(f"Maximum {MAX_TIMINGS} keystroke samples allowed")
         return v
 
 
@@ -54,6 +58,8 @@ class VerifyRequest(BaseModel):
         """Require at least 5 keystroke samples for meaningful scoring."""
         if len(v) < 5:
             raise ValueError("Minimum 5 keystroke samples required")
+        if len(v) > MAX_TIMINGS:
+            raise ValueError(f"Maximum {MAX_TIMINGS} keystroke samples allowed")
         return v
 
 
